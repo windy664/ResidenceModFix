@@ -1,0 +1,5 @@
+name: ResidenceModFix
+version: '1.0-SNAPSHOT'
+main: org.windy.residenceModFix.ResidenceModFix
+api-version: '1.20'
+depend: [Residence]
