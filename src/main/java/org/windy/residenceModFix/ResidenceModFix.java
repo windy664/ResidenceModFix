@@ -54,7 +54,7 @@ public final class ResidenceModFix extends JavaPlugin implements Listener {
             if (block != null) {
                 // 手动实现光线投射检查是否正在与实体交互
                 if (isTargetingEntity(player, 5)) {
-                    logger.info("Player " + player.getName() + " is targeting an entity. Interaction allowed.");
+            //        logger.info("Player " + player.getName() + " is targeting an entity. Interaction allowed.");
                     return; // 如果正在与实体交互，则不做任何处理
                 }
 
@@ -78,7 +78,7 @@ public final class ResidenceModFix extends JavaPlugin implements Listener {
                     event.setUseItemInHand(Event.Result.DENY); // 禁止使用手中的物品
                     event.setCancelled(true); // 取消事件
                     player.sendMessage("你不能在这里使用该物品！"); // 发送无法使用的提示信息
-                    logger.info("Player " + player.getName() + " tried to interact with a block but was denied.");
+         //           logger.info("Player " + player.getName() + " tried to interact with a block but was denied.");
                 }
             }
         }
@@ -97,7 +97,7 @@ public final class ResidenceModFix extends JavaPlugin implements Listener {
 
             // 计算方向向量与目标实体向量的点积
             double dotProduct = direction.dot(toEntity);
-            logger.info("Checking entity " + entity.getType() + " with dot product: " + dotProduct);
+          //  logger.info("Checking entity " + entity.getType() + " with dot product: " + dotProduct);
 
             // 如果点积接近于1，说明玩家正在对准这个实体
             if (dotProduct > 0.8) { // 调整这个值以更严格地控制允许的角度
@@ -106,10 +106,10 @@ public final class ResidenceModFix extends JavaPlugin implements Listener {
                 if (distance <= 2) { // 设置最大交互距离
                     // 检查实体是否在黑名单中
                     if (entityBlacklist.contains(entity.getType().name())) {
-                        logger.info("Entity " + entity.getType() + " is blacklisted. Interaction denied.");
+                //        logger.info("Entity " + entity.getType() + " is blacklisted. Interaction denied.");
                         return false; // 如果是黑名单中的实体则不允许交互
                     }
-                    logger.info("Player " + player.getName() + " is targeting entity " + entity.getType());
+                 //   logger.info("Player " + player.getName() + " is targeting entity " + entity.getType());
                     return true; // 如果找到目标实体则返回true
                 }
             }
