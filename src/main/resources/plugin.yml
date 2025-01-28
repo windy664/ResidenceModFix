@@ -1,0 +1,6 @@
+name: ResidenceModFix
+main: org.windy.residencemodfix.plugin
+version: 1.7-SNAPSHOT
+api-version: 1.21
+depend:
+  - Residence
