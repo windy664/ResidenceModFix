@@ -4,10 +4,13 @@ import com.bekvon.bukkit.residence.Residence;
 import com.bekvon.bukkit.residence.protection.ClaimedResidence;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -16,7 +19,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 
@@ -31,12 +33,14 @@ public final class plugin extends JavaPlugin {
 
     private String usernameCachePath; // 配置中的路径
     private String message;
+    private Boolean debug;
 
     @Override
     public void onEnable() {
         // 插件启动逻辑
         EVENT_BUS.register(this);
         logger = getLogger();
+        debug = this.getConfig().getBoolean("debug",false);
 
         // 读取配置文件
         saveDefaultConfig(); // 确保配置文件存在
@@ -60,13 +64,28 @@ public final class plugin extends JavaPlugin {
     @SubscribeEvent
     public void onPlayerLeftClickBlock(PlayerInteractEvent.LeftClickBlock event) {
 
-
-        if(event.getEntity().getBlockStateOn().toString().contains("sign") ||
-                event.getEntity().getBlockStateOn().toString().contains("mek") ||
-                event.getEntity().getBlockStateOn().toString().contains("mail") ||
-                event.getEntity().getBlockStateOn().toString().contains("chair")||
-                event.getEntity().getBlockStateOn().toString().contains("bin")){
+        String name = event.getEntity().getName().toString();
+        if ((name.contains("[MINECRAFT]")) ||
+                name.contains("[MEKANISM]") ||
+                name.contains("[IF]") ||
+                name.contains("[AE2]")) {
             return;
+        }
+        // 修复重点：获取被点击的方块而不是脚下的方块
+        BlockPos clickedPos = event.getPos();
+        BlockState clickedBlockState = event.getLevel().getBlockState(clickedPos);
+
+        log("点击的方块 " + clickedBlockState);
+
+        // 检查被点击的方块是否符合条件
+        if (!clickedBlockState.toString().contains("ae2")) {
+            // 检查是否需要跳过该方块
+            if (clickedBlockState.toString().contains("sign") ||
+                    clickedBlockState.toString().contains("mail") ||
+                    clickedBlockState.toString().contains("chair") ||
+                    clickedBlockState.toString().contains("bin")) {
+                return;
+            }
         }
 
         String uuid = String.valueOf(event.getEntity().getUUID());
@@ -74,7 +93,7 @@ public final class plugin extends JavaPlugin {
         String playerName = getPlayerNameFromUUID(uuid);
 
         if (playerName == null) {
-            logger.warning("找不到玩家: " + uuid);
+            log("找不到玩家: " + uuid);
             return;
         }
 
@@ -83,7 +102,12 @@ public final class plugin extends JavaPlugin {
             return;
         }
 
-        Location location = player.getLocation();
+        int x = clickedPos.getX();
+        int y = clickedPos.getY();
+        int z = clickedPos.getZ();
+
+        World world = player.getWorld();
+        Location location = new Location(world,x,y,z);
         // 获取当前位置的领地
         ClaimedResidence residence = Residence.getInstance().getResidenceManager().getByLoc(location);
 
@@ -101,19 +125,37 @@ public final class plugin extends JavaPlugin {
 
     @SubscribeEvent
     public void onPlayerRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
-        if(event.getEntity().getBlockStateOn().toString().contains("sign") ||
-                event.getEntity().getBlockStateOn().toString().contains("mek") ||
-                event.getEntity().getBlockStateOn().toString().contains("mail") ||
-                event.getEntity().getBlockStateOn().toString().contains("chair")||
-                event.getEntity().getBlockStateOn().toString().contains("bin")){
+
+        String name = event.getEntity().getName().toString();
+        if ((name.contains("[MINECRAFT]")) ||
+                name.contains("[MEKANISM]") ||
+                name.contains("[IF]") ||
+                name.contains("[AE2]")) {
             return;
         }
+        // 修复重点：获取被点击的方块而不是脚下的方块
+        BlockPos clickedPos = event.getPos();
+        BlockState clickedBlockState = event.getLevel().getBlockState(clickedPos);
+
+        log("点击的方块 " + clickedBlockState);
+
+        // 检查被点击的方块是否符合条件
+        if (!clickedBlockState.toString().contains("ae2")) {
+            // 检查是否需要跳过该方块
+            if (clickedBlockState.toString().contains("sign") ||
+                    clickedBlockState.toString().contains("mail") ||
+                    clickedBlockState.toString().contains("chair") ||
+                    clickedBlockState.toString().contains("bin")) {
+                return;
+            }
+        }
+
         String uuid = String.valueOf(event.getEntity().getUUID());
 
         String playerName = getPlayerNameFromUUID(uuid);
 
         if (playerName == null) {
-            logger.warning("找不到玩家: " + uuid);
+            log("找不到玩家: " + uuid);
             return;
         }
 
@@ -121,8 +163,12 @@ public final class plugin extends JavaPlugin {
         if (player == null || player.isOp()) {
             return;
         }
+        int x = clickedPos.getX();
+        int y = clickedPos.getY();
+        int z = clickedPos.getZ();
 
-        Location location = player.getLocation();
+        World world = player.getWorld();
+        Location location = new Location(world,x,y,z);
         // 获取当前位置的领地
         ClaimedResidence residence = Residence.getInstance().getResidenceManager().getByLoc(location);
 
@@ -184,7 +230,13 @@ public final class plugin extends JavaPlugin {
             lastCacheUpdate = System.currentTimeMillis();
 
         } catch (IOException e) {
-            logger.warning("找不到 usernamecache.json: " + e.getMessage());
+            log("找不到 usernamecache.json: " + e.getMessage());
+        }
+    }
+
+    private void log(String message){
+        if(debug) {
+            logger.info(message);
         }
     }
 }
