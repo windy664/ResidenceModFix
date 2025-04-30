@@ -6,10 +6,12 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.ExplosionEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -273,6 +275,12 @@ public final class plugin extends JavaPlugin {
         }
     }
 
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void useOwnWrenchLogicForCreateBlocks(PlayerInteractEvent.RightClickBlock event) {
+
+    }
+
+
     /**
      * 根据 UUID 获取玩家名称
      *
@@ -295,7 +303,6 @@ public final class plugin extends JavaPlugin {
     private void updateCache() {
         try {
             // 读取 usernamecache.json 文件
-            //File file = new File(usernameCachePath);
             File file = new File("usernamecache.json");
 
             if (!file.exists()) {
