@@ -5,6 +5,10 @@ import com.bekvon.bukkit.residence.protection.ClaimedResidence;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -14,7 +18,9 @@ import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.BlockBreakEvent;
@@ -276,7 +282,56 @@ public final class plugin extends JavaPlugin {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGH)
-    public static void useOwnWrenchLogicForCreateBlocks(PlayerInteractEvent.RightClickBlock event) {
+    public void useWrench(PlayerInteractEvent.RightClickBlock event) {
+        ItemStack itemStack = event.getItemStack();
+        if (itemStack.isEmpty()) return;
+        Item item = itemStack.getItem();
+        if (item == null) return;
+        ResourceLocation registryName = BuiltInRegistries.ITEM.getKey(item);
+        if (registryName == null) return;
+        String path = registryName.getPath().toLowerCase();
+        if (!path.contains("wrench")) return;
+        String name = event.getEntity().getName().toString();
+        if ((name.contains("[MINECRAFT]")) ||
+                name.contains("[MEKANISM]") ||
+                name.contains("[IF]") ||
+                name.contains("[AE2]")) {
+            return;
+        }
+        BlockPos clickedPos = event.getPos();
+
+        String uuid = String.valueOf(event.getEntity().getUUID());
+
+        String playerName = getPlayerNameFromUUID(uuid);
+
+        if (playerName == null) {
+            log("找不到玩家: " + uuid);
+            return;
+        }
+
+        Player player = Bukkit.getPlayer(playerName);
+        if (player == null || player.isOp()) {
+            return;
+        }
+        int x = clickedPos.getX();
+        int y = clickedPos.getY();
+        int z = clickedPos.getZ();
+
+        World world = player.getWorld();
+        Location location = new Location(world,x,y,z);
+        // 获取当前位置的领地
+        ClaimedResidence residence = Residence.getInstance().getResidenceManager().getByLoc(location);
+
+        if (residence == null) {
+            return;
+        }
+
+        // 检查玩家是否可以在该领地内使用方块
+        boolean canUse = residence.getPermissions().playerHas(player, "use", true);
+        if (!canUse) {
+            event.setCanceled(true);
+            player.sendMessage(message);
+        }
 
     }
 
@@ -336,4 +391,5 @@ public final class plugin extends JavaPlugin {
             logger.info(message);
         }
     }
+
 }
